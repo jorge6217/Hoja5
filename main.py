@@ -18,11 +18,8 @@ def function(env, Tproceso, codigo, RAM, memUtilizar, Instrucciones, InsPorMin):
     #Tiempo de llegada
     yield env.timeout(Tproceso)
     print('Tiempo: %f - %s se solicita %d de RAM' % (env.now, codigo, memUtilizar))
-    #
-    #
     #tiempos.append(math.floor(Tproceso)) #Agregar tiempos a la lista
-    #
-    #
+
     
     #Empezar tiempo
     Tllegada = env.now
@@ -62,3 +59,21 @@ def function(env, Tproceso, codigo, RAM, memUtilizar, Instrucciones, InsPorMin):
             #Se devuelve la memoria utilizada a la RAM
             yield RAM.put(memUtilizar)
             print("Se finalizo el proceso %f - %s, se utilizo solo %d de Memoria RAM" % (env.now, codigo, memUtilizar))
+            
+           
+random.seed(RANDOM_SEED)
+env = simpy.Environment()
+RAM = simpy.Container(env, init = Memoria, capacity= 100)
+CPU = simpy.Resource(env, capacity = 1)
+Espera = simpy.Resource(env, capacity = 1)
+InsPorMin = 3.0
+constante = 1
+
+#Se crea un nuevo proceso
+for i in range(Procesos):
+    Tproceso = random.expovariate(1.0/constante)
+    memUtilizar= random.randint(1, 10)  #Memoria a solicitar
+    Instrucciones= random.randint(1, 10) #Intrucciones que necesitaran 
+    env.process(function(env, Tproceso,"Proceso %d" % i,RAM, memUtilizar,Instrucciones,InsPorMin))
+   
+ 

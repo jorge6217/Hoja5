@@ -9,7 +9,7 @@ import random
 import statistics
 import math
 
-process_times = [25, 50, 100, 150 ]
+process_times = [4, 8, 12, 16 ]
 RANDOM_SEED=20
 Procesos=25
 Memoria=100

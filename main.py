@@ -9,6 +9,7 @@ import random
 import statistics
 import math
 
+process_times = [25, 50, 100, 150 ]
 RANDOM_SEED=20
 Procesos=25
 Memoria=100
@@ -69,6 +70,13 @@ Espera = simpy.Resource(env, capacity = 1)
 InsPorMin = 3.0
 constante = 1
 
+def stats():
+    print()
+    print('---Stadisticas:---')
+    print()
+    print(f'✓ Average execution time: {statistics.mean(process_times)}')
+    print(f'✓ Standard Deviation: {statistics.pstdev(process_times)}')
+
 #Se crea un nuevo proceso
 for i in range(Procesos):
     Tproceso = random.expovariate(1.0/constante)
@@ -76,4 +84,7 @@ for i in range(Procesos):
     Instrucciones= random.randint(1, 10) #Intrucciones que necesitaran 
     env.process(function(env, Tproceso,"Proceso %d" % i,RAM, memUtilizar,Instrucciones,InsPorMin))
    
- 
+#Comienza el proceso de ejecucion
+env.run()
+#Corre las estadisticas
+stats()

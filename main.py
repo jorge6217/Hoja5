@@ -6,54 +6,59 @@
 
 import simpy
 import random
+import statistics
+import math
 
-RANDOM_SEED = 123
+RANDOM_SEED=20
+Procesos=25
+Memoria=100
 
-INTERVAL_CREATION = 10
-NUM_CORES = 1
-INSTRUCTIONS_PER_CYCLE = 3
-RAM_SIZE = 100
-PROCESS_COUNT = 25
+def function(env, Tproceso, codigo, RAM, memUtilizar, Instrucciones, InsPorMin):
+    
+    #Tiempo de llegada
+    yield env.timeout(Tproceso)
+    print('Tiempo: %f - %s se solicita %d de RAM' % (env.now, codigo, memUtilizar))
+    #
+    #
+    #tiempos.append(math.floor(Tproceso)) #Agregar tiempos a la lista
+    #
+    #
+    
+    #Empezar tiempo
+    Tllegada = env.now
 
-class Process:
-    def __init__(self, env, ram, cpu, process_id, instructions_per_cycle):
-        self.env = env
-        self.ram = ram
-        self.cpu = cpu
-        self.process_id = process_id
-        self.instructions_per_cycle = instructions_per_cycle
+    #Solicitud de espacio a la RAM
+    yield RAM.get(memUtilizar) #Solicitar memoria a la RAM
+    print('Tiempo: %f - %s (Solicitud de RAM) %d de RAM,aceptada' % (env.now, codigo, memUtilizar))
 
-    def run(self):
-        process_time = 0
-        while self.ram.level >= self.instructions_per_cycle:
-            with self.cpu.request() as request:
-                yield request
-                self.ram.get(self.instructions_per_cycle)
-                process_time += 1
-                yield self.env.timeout(1)
-                self.ram.put(self.instructions_per_cycle)
-        return process_time
 
-def simulation(env, ram, cpu, interval_creation, num_cores, instructions_per_cycle, ram_size, process_count):
-    print()
-    print('---SIMULATION STARTED---')
-    print()
-    process_times = []
-    for process_id in range(1, process_count+1):
-        next_process_time = random.expovariate(1.0 / interval_creation)
-        yield env.timeout(next_process_time)
-        process = Process(env, ram, cpu, process_id, instructions_per_cycle)
-        env.process(process.run())
-        process_time = yield process.run()
-        process_times.append(process_time)
-    return process_times
-
-random.seed(RANDOM_SEED)
-env = simpy.Environment()
-ram = simpy.Container(env, capacity=RAM_SIZE, init=RAM_SIZE)
-cpu = simpy.Resource(env, capacity=NUM_CORES)
-
-process_times = env.run(until=simulation(env, ram, cpu, INTERVAL_CREATION, NUM_CORES, INSTRUCTIONS_PER_CYCLE, RAM_SIZE, PROCESS_COUNT))
-
-from stats import showData
-showData(process_times)
+    #Instrucciones que se completaron
+    CompletedIns=0
+    
+    #Inicializar el CPU
+    with CPU.request() as req:
+        yield req
+        #Obtener instrucciones totales a realizar
+        if(Instrucciones>=InsPorMin):
+            #Instrucciones a realizar
+            InsRealizar = InsPorMin
+        else:
+            #Si las instrucciones son menores a 3
+            InsRealizar = Instrucciones-CompletedIns
+            
+        #Tomamos el tiempo para realizar la Instruccion
+        yield  env.timeout(InsRealizar/InsPorMin)
+        
+        #Se actualiza las Instrucciones completadas
+        CompletedIns += InsRealizar
+        
+        #Se genera un random para ver si repite el proceso o sale
+        cont = random.randint(1,2)
+        if cont == 1 and InsRealizar<InsPorMin:
+            with Espera.request() as reqE:
+                yield reqE
+                
+            yield env.timeout(1)
+            #Se devuelve la memoria utilizada a la RAM
+            yield RAM.put(memUtilizar)
+            print("Se finalizo el proceso %f - %s, se utilizo solo %d de Memoria RAM" % (env.now, codigo, memUtilizar))
